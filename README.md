@@ -1,2 +1,2 @@
-# CorreoQuery
-CorreQuery es una interfaz diseñada para realizar búsquedas eficientes de información en bases de datos de correos electrónicos. Esta herramienta proporciona una experiencia de usuario intuitiva para explorar y recuperar datos relevantes almacenados en la base de datos, facilitando la gestión y búsqueda de correos electrónicos.
+# EmailQuery
+EmailQuery is an interface designed to perform efficient searches for information in email databases. This tool provides an intuitive user experience for exploring and retrieving relevant data stored in the database, facilitating the management and search 
