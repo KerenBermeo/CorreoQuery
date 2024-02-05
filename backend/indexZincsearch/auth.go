@@ -1,18 +1,17 @@
 package indexzincsearch
 
 import (
+	"bytes"
 	"net/http"
-	"strings"
 )
 
-func MakeRequestWithAuth(method string, url string, body string) (*http.Request, error) {
-	req, err := http.NewRequest(method, url, strings.NewReader(body))
+func MakeRequestWithAuth(method string, url string, data []byte) (*http.Request, error) {
+
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
 
-	// zincUser := os.Getenv("ZINC_FIRST_ADMIN_USER")
-	// zincPass := os.Getenv("ZINC_FIRST_ADMIN_PASSWORD")
 	zincUser := "admin"
 	zincPass := "Complexpass#123"
 	req.SetBasicAuth(zincUser, zincPass)

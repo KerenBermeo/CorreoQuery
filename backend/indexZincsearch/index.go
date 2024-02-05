@@ -11,36 +11,38 @@ func CreateIndex() {
 		"mappings": {
 			"properties": {
 				"id": {
-					"type": "text",
-					"index": false,
-					"store": false
+					"type": "keyword",
+					"index": true,
+					"store": true,
+					"sortable": true
 				},
 				"from": {
 					"type": "text",
-					"index": false,
-					"store": false
+					"index": true,
+					"store": true
 				},
 				"to": {
 					"type": "text",
-					"index": false,
-					"store": false
+					"index": true,
+					"store": true
 				},
 				"subject": {
 					"type": "text",
 					"index": true,
-					"store": false
+					"store": true
 				},
 				"content": {
 					"type": "text",
 					"index": true,
-					"store": false,
+					"store": true,
 					"highlightable": true
 				},
 				"date": {
-					"type": "text",
+					"type": "date",
 					"index": true,
-					"store": false,
-					"highlightable": true
+					"store": true,
+					"highlightable": true,
+					"sortable": true
 				}
 			}
 		},
@@ -56,5 +58,5 @@ func CreateIndex() {
 	}
 	`)
 
-	httpPOST(url, indexConfig)
+	HttpPOST(url, string(indexConfig))
 }
