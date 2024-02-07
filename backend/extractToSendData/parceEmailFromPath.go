@@ -1,6 +1,9 @@
 package data
 
 import (
+	// https://pkg.go.dev/io
+	// https://pkg.go.dev/net/mail
+
 	"io"
 	"log"
 	"net/mail"
@@ -13,6 +16,7 @@ import (
 // parseEmailFromPath lee un archivo de correo electrónico desde la ruta especificada, lo parsea y devuelve una estructura de modelo Email.
 // La función toma una ruta de archivo como entrada y devuelve una estructura de modelo Email y un posible error.
 func ParseEmailFromPath(path string) (model.Email, error) {
+
 	// Abre el archivo en la ruta especificada.
 	fd, err := os.Open(path)
 
@@ -38,6 +42,14 @@ func ParseEmailFromPath(path string) (model.Email, error) {
 		return model.Email{}, err
 	}
 
+	// Divide el cuerpo del correo electrónico en líneas.
+	bodyLines := strings.Split(string(body), "\n")
+
+	// Elimina los espacios en blanco adicionales de cada línea.
+	for i, line := range bodyLines {
+		bodyLines[i] = strings.TrimSpace(line)
+	}
+
 	// Obtiene los destinatarios del encabezado y los divide en una lista.
 	recipients := strings.Split(header.Get("To"), ", ")
 
@@ -48,7 +60,7 @@ func ParseEmailFromPath(path string) (model.Email, error) {
 		From:      header.Get("From"),
 		To:        recipients,
 		Subject:   header.Get("Subject"),
-		Content:   string(body),
+		Content:   bodyLines,
 	}
 
 	return mail, nil
