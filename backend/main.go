@@ -10,7 +10,6 @@ import (
 	_ "net/http/pprof"
 
 	data "github.com/KerenBermeo/CorreoQuery/extractToSendData"
-
 	"github.com/KerenBermeo/CorreoQuery/router"
 	"github.com/go-chi/chi/v5"
 )
@@ -24,28 +23,22 @@ func main() {
 	// startTime registra el tiempo de inicio de la ejecución del programa.
 	startTime := time.Now()
 
-	// Nombre del índice que deseas verificar
-	indexName := "email"
-
-	// verificar que el indice no exista, en caso de que exista eliminarlo.
-	err := data.CheckIndexExists(indexName)
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
-
 	// wg es un WaitGroup para esperar a que todas las goroutines finalicen.
 	var wg sync.WaitGroup
 
 	// rootDirectory es la ruta del directorio raíz que contiene los correos electrónicos.
-	rootDirectory := "/Users/user/Desktop/EmailQuery/data"
-	//rootDirectory := "/Users/user/Desktop/archivos"
+	// rootDirectory := "/Users/user/Desktop/EmailQuery/data"
+	rootDirectory := "/Users/user/Desktop/archivos"
 	//rootDirectory := "/Users/user/Desktop/EmailQuery/data/arnold-j"
 
 	// batchSize es el tamaño del lote de correos electrónicos a procesar en cada iteración.
 	batchSize := 500
 
 	// mailsPaths contiene los paths de los archivos de correos electrónicos.
-	mailsPaths := data.CollectMailsPaths(rootDirectory)
+	mailsPaths, err := data.CollectMailsPaths(rootDirectory)
+	if err != nil {
+		log.Printf("error al recopilar paths: %s", err)
+	}
 
 	// chunks contiene lotes de paths de correos electrónicos para procesamiento concurrente.
 	chunks := data.ChunkEmails(mailsPaths)
@@ -69,7 +62,7 @@ func main() {
 	fmt.Printf("Tiempo total de ejecución: %s\n", duration)
 
 	r := chi.NewRouter()
-	router.SetupRoutes(r)
+	router.ConfigureRouter(r)
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
