@@ -24,7 +24,7 @@ console.log(props.email.to[0])
               <div class="text-gray-800">                
                 <span v-for="(recipient, indexi) in props.email.to" :key="indexi">                                
                     <span v-for="(toEmail, indexj) in recipient" :key="indexj">
-                        {{ toEmail }}, <br>z
+                        {{ toEmail }} - 
                     </span>                    
                 </span>    
               </div>
@@ -45,7 +45,7 @@ console.log(props.email.to[0])
                 </span>
                 <span v-for="(container, indexA) in props.email.to" :key="indexA">                                
                     <span v-for="(contentEmail, indexB) in container" :key="indexB">
-                        {{ contentEmail }}, <br>z
+                        {{ contentEmail }}, <br>
                     </span>                    
                 </span>
                 </div>
