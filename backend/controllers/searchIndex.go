@@ -10,14 +10,13 @@ import (
 
 	getenv "github.com/KerenBermeo/CorreoQuery/getEnv"
 	"github.com/KerenBermeo/CorreoQuery/model"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 func SearchAll(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("_______________1_____________")
 	index := chi.URLParam(r, "index_name")
 	numStr := chi.URLParam(r, "num")
-	fmt.Println("_______________donde para?_____________")
+
 	// Convertir la cadena a un entero
 	num, err := strconv.Atoi(numStr)
 	if err != nil {
@@ -25,15 +24,12 @@ func SearchAll(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("error converting 'num' parameter to integer: %v", err), http.StatusBadRequest)
 		return
 	}
-	fmt.Println("_______________1_____________")
 	if index == "" {
 		http.Error(w, "Index name is required", http.StatusBadRequest)
 		return
 	}
 
-	fmt.Println("_______________2_____________")
-
-	url := fmt.Sprintf("%s/api/%s/_search/", getenv.GetZincSearchServerURL(), index)
+	url := fmt.Sprintf("%sapi/%s/_search/", getenv.GetZincSearchServerURL(), index)
 
 	// Crear una nueva estructura de solicitud de búsqueda
 	searchReq := model.SearchRequest{
@@ -51,10 +47,6 @@ func SearchAll(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("error encoding request body: %v", err), http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("_______________3_____________")
-	fmt.Println("_______________Json_____________")
-	fmt.Println(string(reqBody))
-	fmt.Println("_______________Fin Json_____________")
 
 	// Crear una nueva solicitud HTTP con el cuerpo codificado en JSON
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
@@ -76,12 +68,6 @@ func SearchAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer res.Body.Close()
-
-	// Verificar el código de estado de la respuesta
-	if res.StatusCode != http.StatusOK {
-		http.Error(w, fmt.Sprintf("HTTP request failed with status code %d", res.StatusCode), res.StatusCode)
-		return
-	}
 
 	// Leer el cuerpo de la respuesta
 	body, err := io.ReadAll(res.Body)
