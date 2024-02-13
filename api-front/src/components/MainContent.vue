@@ -60,6 +60,14 @@ console.log(props.email.to[0])
   width: 969px;
   height: 400px;
 }
+@media (max-width: 767px) {
+  .main-content {
+    width: 416px;
+    height: 330px; /* Cambia a una sola columna */
+  }
+}
+
+
 </style>
 
 

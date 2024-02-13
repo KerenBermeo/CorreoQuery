@@ -1,15 +1,9 @@
 <script setup lang="ts">
-import NavigationBar from "./components/NavigationBar.vue";
-import LateralColumn from "./components/LateralColumn.vue";
+import HomeView from "./views/HomeView.vue";
 </script>
 
 <template>
-  <header>
-    <NavigationBar />
- </header>
- <main>
-  <LateralColumn />
- </main>
+  <HomeView />
 </template>
 
 <style scoped>

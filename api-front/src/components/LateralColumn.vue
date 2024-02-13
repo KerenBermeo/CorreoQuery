@@ -112,6 +112,12 @@ fetchEmails();
 ::-webkit-scrollbar-track {
   background-color: #CBD5E0; /* Color del fondo de la barra de desplazamiento */
 }
+
+@media (max-width: 767px) {
+  .email-app {
+    flex-direction: column; /* Cambia a una sola columna */
+  }
+}
 </style>
 
   
