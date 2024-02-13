@@ -11,7 +11,7 @@ console.log(props.email.to[0])
 <template>
     <!-- Contenido principal -->
     <div class="main-content overflow-y-auto px-4 items-center">
-        <div class="email-view  bg-white shadow-xl rounded-lg p-8">
+        <div class="email-view  bg-white  rounded-lg p-8">
           <!-- Detalles del correo -->
           <h2 class="text-2xl font-semibold mb-4">{{ props.email.subject }}</h2>
           <div class="grid grid-cols-2 gap-4">
@@ -19,7 +19,7 @@ console.log(props.email.to[0])
               <span class="font-semibold text-gray-700">From:</span>
               <div class="text-gray-800">{{ props.email.from }}</div>
             </div>
-            <div  class="col-span-2 overflow-y-auto max-w-100" >
+            <div  class="col-span-2 overflow-y-auto max-width" >
               <span class="font-semibold text-gray-700 ">To:</span>
               <div class="text-gray-800">                
                 <span v-for="(recipient, indexi) in props.email.to" :key="indexi">                                
@@ -55,6 +55,12 @@ console.log(props.email.to[0])
     </div>
 </template>
 
+<style scoped>
+.main-content {
+  width: 969px;
+  height: 400px;
+}
+</style>
 
 
   
