@@ -2,17 +2,23 @@ package data
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
+	"net/http"
+	"strings"
 
+	getenv "github.com/KerenBermeo/CorreoQuery/getEnv"
 	"github.com/KerenBermeo/CorreoQuery/model"
 )
 
 // ParsedEmailJson convierte una estructura de correo electrónico (model.Email)
 // en formato JSON y lo prepara para su indexación en Zincsearch.
 func ParsedEmailJson(mail model.Email) (string, error) {
+	nameIndex := getenv.GetNameIndex()
+	if nameIndex == "" {
+		log.Println("Variable de entorno vacia")
+	}
 	//indice a agregar
-	strIndexName := `{ "index" : { "_index" : "email" } }` + "\n"
+	strIndexName := `{ "index" : { "_index" : "` + nameIndex + `" } }` + "\n"
 
 	emailJSON, err := json.Marshal(mail)
 	if err != nil {
@@ -26,14 +32,14 @@ func ParsedEmailJson(mail model.Email) (string, error) {
 }
 
 func ConcurrentParsedEmailJson(parsedModels []model.Email) {
-	fmt.Println(parsedModels)
+
 	var batch []string
 
 	for _, data := range parsedModels {
 
 		jsonStr, err := ParsedEmailJson(data)
 		if err != nil {
-			fmt.Println("Error al convertir a JSON:", err)
+			log.Println("Error al convertir a JSON:", err)
 			continue
 		}
 		batch = append(batch, jsonStr)
@@ -42,35 +48,39 @@ func ConcurrentParsedEmailJson(parsedModels []model.Email) {
 	sendBatch(batch)
 }
 
+var Count int
+
 func sendBatch(batch []string) {
-	//fmt.Println(batch)
+	Count++
 
-	// url := getenv.GetZincSearchServerURL() + "api/_bulk"
+	log.Println("El lote numero: ", Count, " Tamaño del batch: ", len(batch))
 
-	// // Crear la solicitud HTTP con los correos electrónicos agrupados
-	// req, err := http.NewRequest("POST", url, strings.NewReader(strings.Join(batch, "\n")))
-	// if err != nil {
-	// 	fmt.Println("Error al crear la solicitud HTTP:", err)
-	// 	return
-	// }
+	serverUrl := getenv.GetZincSearchServerURL()
+	if serverUrl == "" {
+		log.Println("Variable de entorno vacia")
+	}
 
-	// // Establecer el encabezado Content-Type
-	// req.Header.Set("Content-Type", "application/json")
-	// getenv.SetBasicAuth(req)
+	url := serverUrl + "api/_bulk"
 
-	// client := &http.Client{}
+	// Crear la solicitud HTTP con los correos electrónicos agrupados
+	req, err := http.NewRequest("POST", url, strings.NewReader(strings.Join(batch, "\n")))
+	if err != nil {
+		log.Println("Error al crear la solicitud HTTP:", err)
+		return
+	}
 
-	// // Realizar la solicitud utilizando el cliente HTTP reutilizado
-	// resp, err := client.Do(req)
-	// if err != nil {
-	// 	fmt.Println("Error en la solicitud HTTP:", err)
-	// 	return
-	// }
-	// defer resp.Body.Close()
+	// Establecer el encabezado Content-Type
+	req.Header.Set("Content-Type", "application/json")
+	getenv.SetBasicAuth(req)
 
-	// // Imprimir la respuesta del servidor
-	// fmt.Println("Respuesta del servidor:", resp.Status)
+	client := &http.Client{}
 
-	// Incrementar el contador de lotes
+	// Realizar la solicitud utilizando el cliente HTTP reutilizado
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Error en la solicitud HTTP:", err)
+		return
+	}
+	defer resp.Body.Close()
 
 }

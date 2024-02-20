@@ -1,87 +1,24 @@
 package data
 
-// import (
-// 	"fmt"
-// 	"io"
-// 	"log"
-// 	"net/mail"
-// 	"os"
-// 	"strings"
-
-// 	"github.com/KerenBermeo/CorreoQuery/model"
-// )
-
-// func ParseEmailFromPath(contador int, paths []string) ([]model.Email, error) {
-// 	var emails []model.Email
-// 	archivoNum := 0
-// 	fmt.Println("PARSEANDO LOTE NUMERO ", contador, " CON ", len(paths), " ARCHIVOS")
-// 	fmt.Println("---------------(#LOTE/#ARCHIVO)---------------------")
-// 	for _, filePath := range paths {
-// 		archivoNum++
-// 		fmt.Println("---------------(  ", contador, "  |  ", archivoNum, " )------------------ ")
-// 		fd, err := os.Open(filePath)
-// 		if err != nil {
-// 			log.Printf("Error al abrir el archivo %s: %v", filePath, err)
-// 			continue // Continuar con el próximo archivo
-// 		}
-
-// 		// Cerrar el archivo después de leerlo
-// 		defer fd.Close()
-
-// 		// Leer y parsear el mensaje de correo electrónico
-// 		m, err := mail.ReadMessage(fd)
-// 		if err != nil {
-// 			log.Printf("Error al analizar el archivo %s: %v", filePath, err)
-// 			continue // Continuar con el próximo archivo
-// 		}
-
-// 		header := m.Header
-// 		body, err := io.ReadAll(m.Body)
-// 		if err != nil {
-// 			log.Printf("Error al leer el cuerpo del correo electrónico %s: %v", filePath, err)
-// 			continue // Continuar con el próximo archivo
-// 		}
-
-// 		recipients := strings.Split(header.Get("To"), ", ")
-
-// 		// Crear el correo electrónico solo si todas las operaciones fueron exitosas
-// 		email := model.Email{
-// 			MessageId: header.Get("Message-ID"),
-// 			Date:      header.Get("Date"),
-// 			From:      header.Get("From"),
-// 			To:        recipients,
-// 			Subject:   header.Get("Subject"),
-// 			Content:   string(body),
-// 		}
-// 		emails = append(emails, email)
-// 	}
-
-// 	//fmt.Println(emails)
-
-// 	return emails, nil
-// }
-
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/KerenBermeo/CorreoQuery/model"
 )
 
-func ParseEmailFromPath(contador int, paths []string) ([]model.Email, error) {
+func ParseEmailFromPath(paths []string, maxBatch int, wg *sync.WaitGroup) {
 
 	var email []model.Email
-	archivoNum := 0
-	// fmt.Println("PARSEANDO LOTE NUMERO ", contador, " CON ", len(paths), " ARCHIVOS")
-	// fmt.Println("---------------(#LOTE/#ARCHIVO)---------------------")
-	for _, path := range paths {
-		archivoNum++
-		// fmt.Println("---------------(  ", contador, "  |  ", archivoNum, " )------------------ ")
+
+	for i, path := range paths {
 		fd, err := os.Open(path)
 		if err != nil {
-			return []model.Email{}, fmt.Errorf("failed to open file: %v", err)
+			continue
 		}
 		defer fd.Close()
 
@@ -90,21 +27,16 @@ func ParseEmailFromPath(contador int, paths []string) ([]model.Email, error) {
 		var headerTextBuffer strings.Builder
 		var bodyTextBuffer strings.Builder
 
-		// Leer el encabezado del correo electrónico
 		for scanner.Scan() {
 			line := scanner.Text()
 			if line == "" {
-				break // La línea vacía marca el final del encabezado
+				break
+			}
+			if len(line) > bufio.MaxScanTokenSize {
+				// Si la línea es demasiado larga, pasa a la siguiente.
+				continue
 			}
 			headerTextBuffer.WriteString(line + "\n")
-		}
-
-		// Verificar errores durante la lectura del encabezado
-		if err := scanner.Err(); err != nil {
-			if err != bufio.ErrTooLong {
-				return []model.Email{}, fmt.Errorf("error while reading email header: %v in folder %v", err, path)
-			}
-			continue // Ignorar el archivo que no se puede leer completamente y continuar con el siguiente
 		}
 
 		// Leer el cuerpo del correo electrónico
@@ -112,26 +44,24 @@ func ParseEmailFromPath(contador int, paths []string) ([]model.Email, error) {
 			bodyTextBuffer.WriteString(scanner.Text() + "\n")
 		}
 
-		// Verificar errores durante la lectura del cuerpo
-		if err := scanner.Err(); err != nil {
-			if err != bufio.ErrTooLong {
-				return []model.Email{}, fmt.Errorf("error while reading email body: %v in folder %v", err, path)
-			}
-			continue // Ignorar el archivo que no se puede leer completamente y continuar con el siguiente
-		}
-
-		// Parsear el correo electrónico
-
-		parsedEmail, err := ParseEmail(headerTextBuffer.String(), bodyTextBuffer.String())
-
-		if err != nil {
-			return []model.Email{}, fmt.Errorf("error parsing email in folder %v: %v", path, err)
-		}
+		parsedEmail, _ := ParseEmail(headerTextBuffer.String(), bodyTextBuffer.String())
 
 		email = append(email, parsedEmail)
 
+		batchSize := len(paths)
+
+		if (i+1)%maxBatch == 0 {
+			log.Printf("Uploading bulk %v / %v", i+1, batchSize)
+			ConcurrentParsedEmailJson(email)
+			email = nil
+		} else if email != nil && (i+1) == batchSize {
+			log.Printf("Uploading bulk %v / %v", i+1, batchSize)
+			ConcurrentParsedEmailJson(email)
+		}
+
 	}
-	return email, nil
+
+	wg.Done()
 }
 
 func ParseEmail(headerText string, bodyText string) (model.Email, error) {
@@ -164,14 +94,6 @@ func ParseEmail(headerText string, bodyText string) (model.Email, error) {
 			return model.Email{}, fmt.Errorf("malformed header line: %s", line)
 		}
 	}
-
-	// Verificar campos requeridos
-	// requiredFields := []string{"Message-ID", "From", "To", "Subject", "Date"}
-	// for _, field := range requiredFields {
-	// 	if _, ok := header[field]; !ok {
-	// 		return model.Email{}, fmt.Errorf("missing required field in header: %s", field)
-	// 	}
-	// }
 
 	email.MessageId = header["Message-ID"]
 	email.From = header["From"]

@@ -3,8 +3,6 @@ package data
 import "runtime"
 
 // ChunkEmails divide una lista de rutas de correos electrónicos en fragmentos más pequeños.
-// La función toma un slice de rutas de correos electrónicos como entrada y devuelve un slice de slices,
-// donde cada sub-slice representa un fragmento de las rutas originales.
 func ChunkEmails(mailsPaths []string) [][]string {
 	// Se declara una variable slices de slices para almacenar los fragmentos de las rutas de correos electrónicos.
 	var chunks [][]string

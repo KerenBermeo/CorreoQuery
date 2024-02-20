@@ -5,39 +5,36 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
-	"strconv"
 
 	getenv "github.com/KerenBermeo/CorreoQuery/getEnv"
 	"github.com/KerenBermeo/CorreoQuery/model"
-	"github.com/go-chi/chi/v5"
 )
 
-func SearchAll(w http.ResponseWriter, r *http.Request) {
-	index := chi.URLParam(r, "index_name")
-	numStr := chi.URLParam(r, "num")
+var NumberFiles int
 
-	// Convertir la cadena a un entero
-	num, err := strconv.Atoi(numStr)
-	if err != nil {
-		// Manejar el error si la conversión falla
-		http.Error(w, fmt.Sprintf("error converting 'num' parameter to integer: %v", err), http.StatusBadRequest)
-		return
-	}
-	if index == "" {
-		http.Error(w, "Index name is required", http.StatusBadRequest)
-		return
+func GetEmails(w http.ResponseWriter, r *http.Request) {
+
+	serverURL := getenv.GetZincSearchServerURL()
+	if serverURL == "" {
+		log.Println("Variable de entorno vacia")
 	}
 
-	url := fmt.Sprintf("%sapi/%s/_search/", getenv.GetZincSearchServerURL(), index)
+	nameIndex := getenv.GetNameIndex()
+	if nameIndex == "" {
+		log.Println("Variable de entorno vacia")
+	}
+
+	url := fmt.Sprintf("%sapi/%s/_search/", serverURL, nameIndex)
 
 	// Crear una nueva estructura de solicitud de búsqueda
 	searchReq := model.SearchRequest{
 		SearchType: "matchall",
-		Query:      struct{}{},
+		Query:      model.Query{},
 		SortFields: []string{"-@timestamp"},
 		From:       0,
-		MaxResults: num,
+		MaxResults: NumberFiles,
 		Source:     []string{},
 	}
 
@@ -49,6 +46,7 @@ func SearchAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Crear una nueva solicitud HTTP con el cuerpo codificado en JSON
+
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("error creating HTTP request: %v", err), http.StatusInternalServerError)
@@ -59,7 +57,10 @@ func SearchAll(w http.ResponseWriter, r *http.Request) {
 	req.Header.Set("Content-Type", "application/json")
 
 	// Establecer la autenticación básica en la solicitud
-	getenv.SetBasicAuth(req)
+	err = getenv.SetBasicAuth(req)
+	if err != nil {
+		log.Println("Error: ", err)
+	}
 
 	// Realizar la solicitud HTTP
 	res, err := http.DefaultClient.Do(req)

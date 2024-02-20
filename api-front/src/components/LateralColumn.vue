@@ -1,23 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import MainContent from "./MainContent.vue";
+import type {Email} from '../stores/email';
 
+// Definir las propiedades del componente
+const emails = ref<Email[]>([]);
 
-// Arreglo de objetos de correo electrónico
-const emails = ref<{ id: string; from: string; date: string; to: string; subject: string; content: string }[]>([]);
-// Correo seleccionado
-const selectedEmail = ref<{ from: string; to: string[]; subject: string; date: string; content: string }>({
-  from: '',
-  to: [],
-  subject: '',
-  date: '',
-  content: ''
-});
+// Correo electrónico seleccionado
+const selectedEmail = ref<Email | null>(null);
+
 
 // Método para obtener la lista de correos electrónicos
 const fetchEmails = async () => {
   try {
-    const response = await fetch('http://localhost:8080/api/email/search/100', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/emails`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -28,8 +24,8 @@ const fetchEmails = async () => {
       throw new Error('Error al cargar los correos electrónicos: ' + response.statusText);
     }
     const data = await response.json();
-    // Extraer los datos necesarios y almacenarlos en el arreglo emails
-    console.log(data.hits.hits);
+   
+    // console.log(data.hits.hits);
 
     emails.value = data.hits.hits.map((email: any) => ({
       id: email._id,
@@ -40,12 +36,13 @@ const fetchEmails = async () => {
       content: email._source.content
     }));
 
-    console.log(emails.value);
+   
 
     // Mostrar el primer correo en el contenido principal por defecto
     if (emails.value.length > 0) {
       selectEmail(emails.value[0]);
     }
+   
 
   } catch (error) {
     console.error(error);
@@ -53,17 +50,8 @@ const fetchEmails = async () => {
 };
 
 // Método para seleccionar un correo y mostrarlo en el contenido principal
-const selectEmail = (email: {from: string; date: string; to: string; subject: string; content: string }) => {
-  const selected = emails.value.find(e => e.from === email.from && e.date === email.date);
-  if (selected) {
-    selectedEmail.value = {
-      from: selected.from,
-      to: [selected.to],
-      subject: selected.subject,
-      date: selected.date,
-      content:selected.content
-    };
-  }
+const selectEmail = (email: Email) => {
+  selectedEmail.value = email;
 };
 
 // Llamar al método para obtener la lista de correos electrónicos
@@ -82,7 +70,7 @@ fetchEmails();
       <div class="border-t border-gray-700 h-4/5 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-300">
         <ul class="space-y-2">
           <!-- Iterar sobre los remitentes y asuntos de correo y mostrar cada uno -->
-          <li v-for="email in emails" :key="email.id">
+          <li v-for="email in emails" :key="email?.id">
               <a href="#" class="email-item block py-2 px-4 hover:bg-gray-700 transition duration-300" @click="selectEmail(email)">
                 <span class="font-semibold"><span class="font-bold">{{ email.from }}</span> - <span class="font-thin">{{ email.date }}</span></span>
               </a>
