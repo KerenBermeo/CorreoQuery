@@ -8,10 +8,11 @@ import (
 )
 
 func SetupRoutes(r chi.Router) {
-	r.Route("/api/", func(r chi.Router) {
+	r.Route("/api", func(r chi.Router) {
 		r.Get("/ping", c.Ping)
 		r.Get("/indexes", c.GetIndexNamesList)
-		r.Post("/:index_name/search/:num", c.SearchAll)
+		r.Post("/emails", c.GetEmails)
+		r.Post("/makesearch", c.MakeSearch)
 	})
 
 	log.Println("Routes initialized successfully")

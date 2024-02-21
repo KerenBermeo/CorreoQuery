@@ -1,67 +1,61 @@
 package data
 
 import (
-	// https://pkg.go.dev/io
-	// https://pkg.go.dev/net/mail
-
-	"io"
+	"bufio"
 	"log"
-	"net/mail"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/KerenBermeo/CorreoQuery/model"
 )
 
-// parseEmailFromPath lee un archivo de correo electrónico desde la ruta especificada, lo parsea y devuelve una estructura de modelo Email.
-// La función toma una ruta de archivo como entrada y devuelve una estructura de modelo Email y un posible error.
-func ParseEmailFromPath(path string) (model.Email, error) {
+func ParseEmailFromPath(paths []string, maxBatch int, wg *sync.WaitGroup) {
 
-	// Abre el archivo en la ruta especificada.
-	fd, err := os.Open(path)
+	var email []model.Email
 
-	if err != nil {
-		log.Print("Error leyendo el archivo con la ruta", path, err)
-		return model.Email{}, err
-	}
-	defer fd.Close() // Cierra el archivo después de su uso para evitar posibles fugas de recursos.
+	for i, path := range paths {
+		fd, err := os.Open(path)
+		if err != nil {
+			continue
+		}
+		defer fd.Close()
 
-	// Lee y parsea el mensaje de correo electrónico utilizando el paquete "mail".
-	m, err := mail.ReadMessage(fd)
+		scanner := bufio.NewScanner(fd)
 
-	if err != nil {
-		log.Print("Error al analizar el archivo con la ruta", path, err)
-		return model.Email{}, err
-	}
-	header := m.Header // Obtiene el encabezado del mensaje.
+		var headerTextBuffer strings.Builder
+		var bodyTextBuffer strings.Builder
 
-	// Lee el cuerpo del mensaje de correo electrónico.
-	body, err := io.ReadAll(m.Body)
-	if err != nil {
-		log.Print("Error leyendo el cuerpo del correo electrónico con la ruta", path, err)
-		return model.Email{}, err
-	}
+		for scanner.Scan() {
+			line := scanner.Text()
+			if line == "" {
+				break
+			}
+			if len(line) > bufio.MaxScanTokenSize {
+				continue
+			}
+			headerTextBuffer.WriteString(line + "\n")
+		}
 
-	// Divide el cuerpo del correo electrónico en líneas.
-	bodyLines := strings.Split(string(body), "\n")
+		for scanner.Scan() {
+			bodyTextBuffer.WriteString(scanner.Text() + "\n")
+		}
 
-	// Elimina los espacios en blanco adicionales de cada línea.
-	for i, line := range bodyLines {
-		bodyLines[i] = strings.TrimSpace(line)
-	}
+		parsedEmail, _ := ParseEmailWithHeadersAndBody(headerTextBuffer.String(), bodyTextBuffer.String())
 
-	// Obtiene los destinatarios del encabezado y los divide en una lista.
-	recipients := strings.Split(header.Get("To"), ", ")
+		email = append(email, parsedEmail)
 
-	// Crea y devuelve una estructura de modelo Email con la información extraída del correo electrónico parseado.
-	mail := model.Email{
-		MessageId: header.Get("Message-ID"),
-		Date:      header.Get("Date"),
-		From:      header.Get("From"),
-		To:        recipients,
-		Subject:   header.Get("Subject"),
-		Content:   bodyLines,
+		batchSize := len(paths)
+
+		if (i+1)%maxBatch == 0 {
+			log.Printf("Uploading bulk %v / %v", i+1, batchSize)
+			ConcurrentParsedEmailJson(email)
+			email = nil
+		} else if email != nil && (i+1) == batchSize {
+			log.Printf("Uploading bulk %v / %v", i+1, batchSize)
+			ConcurrentParsedEmailJson(email)
+		}
 	}
 
-	return mail, nil
+	wg.Done()
 }

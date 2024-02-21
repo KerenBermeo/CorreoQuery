@@ -1,94 +1,112 @@
 <script setup lang="ts">
-  const email = {
-      from: 'remitente@example.com',
-      to: ['destinatario1@example.com', 'destinatario2@example.com'],
-      subject: 'Asunto del correo',
-      date: '2024-02-09',
-      content: 'Contenido del correo electrónico'
+import { ref } from 'vue';
+import MainContent from "./MainContent.vue";
+import type {Email} from '../stores/email';
+
+// Definir las propiedades del componente
+const emails = ref<Email[]>([]);
+
+// Correo electrónico seleccionado
+const selectedEmail = ref<Email | null>(null);
+
+
+// Método para obtener la lista de correos electrónicos
+const fetchEmails = async () => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/emails`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({})
+    });
+    if (!response.ok) {
+      throw new Error('Error al cargar los correos electrónicos: ' + response.statusText);
+    }
+    const data = await response.json();
+   
+    // console.log(data.hits.hits);
+
+    emails.value = data.hits.hits.map((email: any) => ({
+      id: email._id,
+      from: email._source.from,
+      date: email._source.date,
+      to: email._source.to,
+      subject: email._source.subject,
+      content: email._source.content
+    }));
+
+   
+
+    // Mostrar el primer correo en el contenido principal por defecto
+    if (emails.value.length > 0) {
+      selectEmail(emails.value[0]);
+    }
+   
+
+  } catch (error) {
+    console.error(error);
   }
+};
+
+// Método para seleccionar un correo y mostrarlo en el contenido principal
+const selectEmail = (email: Email) => {
+  selectedEmail.value = email;
+};
+
+// Llamar al método para obtener la lista de correos electrónicos
+fetchEmails();
 </script>
 
 <template>
-    <div class="email-app mt-16 flex items-center justify-between bg-gray-100 h-screen">
-      <!-- Barra lateral -->
-      <div class="sidebar w-64 bg-white shadow-xl rounded-lg overflow-x-auto custom-scrollbar">
-        <div class="p-4">
-          <!-- Logo o título -->
-          <h1 class="text-2xl font-semibold text-gray-800">Message ID</h1>
-        </div>
-        <div class="border-t border-gray-300">
-          <!-- Lista de correos -->
-          <ul class="space-y-2">
-            <li>
-              <a href="#" class="email-item block py-2 px-4 text-gray-800 hover:bg-gray-200 transition duration-300">
-                <span class="font-semibold">Correo 1</span>
-              </a>
-            </li>
-            <!-- Otros correos -->
-          </ul>
-        </div>
+  <div class="email-app mt-16 h-screen flex items-center justify-center bg-gray-900 text-white">
+    <!-- Barra lateral -->
+    <div class="sidebar w-64 bg-gray-800 shadow-xl rounded-lg border-r border-gray-700 h-3/5">
+      <!-- Título -->
+      <div class="p-4 overflow-x-auto">
+        <h1 class="text-2xl font-semibold">From & Date</h1>
       </div>
-      <!-- Contenido principal -->
-      <div class="main-content flex-1 px-4">
-        <div class="email-view bg-white shadow-xl rounded-lg p-8">
-          <!-- Detalles del correo -->
-          <h2 class="text-2xl font-semibold mb-4">{{ email.subject }}</h2>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <span class="font-semibold text-gray-700">From:</span>
-              <div class="text-gray-800">{{ email.from }}</div>
-            </div>
-            <div>
-              <span class="font-semibold text-gray-700">To:</span>
-              <div class="text-gray-800">
-                <span v-for="(recipient, index) in email.to" :key="index">{{ recipient }}</span>
-              </div>
-            </div>
-            <div>
-              <span class="font-semibold text-gray-700">Subject:</span>
-              <div class="text-gray-800">{{ email.subject }}</div>
-            </div>
-            <div>
-              <span class="font-semibold text-gray-700">Date:</span>
-              <div class="text-gray-800">{{ email.date }}</div>
-            </div>
-            <div class="col-span-2">
-              <span class="font-semibold text-gray-700">Message:</span>
-              <div class="text-gray-800">{{ email.content }}</div>
-            </div>
-            <!-- Otros detalles del correo -->
-          </div>
-          <!-- Botones o acciones -->
-          <div class="mt-8 flex justify-end">
-            <!-- Botones de acción -->
-          </div>
-        </div>
+      <!-- Lista de correos -->
+      <div class="border-t border-gray-700 h-4/5 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-300">
+        <ul class="space-y-2">
+          <!-- Iterar sobre los remitentes y asuntos de correo y mostrar cada uno -->
+          <li v-for="email in emails" :key="email?.id">
+              <a href="#" class="email-item block py-2 px-4 hover:bg-gray-700 transition duration-300" @click="selectEmail(email)">
+                <span class="font-semibold"><span class="font-bold">{{ email.from }}</span> - <span class="font-thin">{{ email.date }}</span></span>
+              </a>
+          </li>
+        </ul>
       </div>
     </div>
-  </template>
-  
-  
-  <style scoped>
-  /* Estilos específicos para este componente */
+    <!-- Contenido principal -->
+    <MainContent :email="selectedEmail"/>
+
+  </div>
+</template>
+
+
+
+<style scoped>
+/* Estos estilos son para navegadores WebKit (Chrome, Safari) */
+::-webkit-scrollbar {
+  width: 6px; /* Ancho de la barra de desplazamiento */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #4A5568; /* Color del relleno de la barra de desplazamiento */
+  border-radius: 3px; /* Radio de borde de la barra de desplazamiento */
+}
+
+::-webkit-scrollbar-track {
+  background-color: #CBD5E0; /* Color del fondo de la barra de desplazamiento */
+}
+
+@media (max-width: 767px) {
   .email-app {
-    font-family: 'Roboto', sans-serif;
+    flex-direction: column; /* Cambia a una sola columna */
   }
+}
+</style>
+
   
-  .sidebar {
-    min-width: 280px;
-  }
-  
-  .email-item {
-    transition: background-color 0.3s ease;
-  }
-  
-  .email-item:hover {
-    background-color: #f0f0f0;
-  }
-  
-  .email-view {
-    min-width: 320px;
-  }
-  
-  </style>
   

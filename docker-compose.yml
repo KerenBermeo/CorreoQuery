@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  zinc-server:
+    build: ./zinc-server
+    ports:
+      - "6001:4080"
+
+  api-back:
+    build: ./backend
+    ports:
+      - "6002:8080"
+    environment:
+      ZINC_SERVER_HOST: http://zinc-server:4080/
+    depends_on:
+      - zinc-server
+
+  api-front:
+    build:
+      context: ./api-front
+      args:
+        elookupbe_host: ${ELOOKUPBE_REMOTE_HOST:-http://localhost:6002/}
+    ports:
+      - "6003:5173"
+    depends_on:
+      - api-back

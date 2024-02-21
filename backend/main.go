@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -9,60 +8,74 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
+	c "github.com/KerenBermeo/CorreoQuery/controllers"
 	data "github.com/KerenBermeo/CorreoQuery/extractToSendData"
+	getenv "github.com/KerenBermeo/CorreoQuery/getEnv"
 	"github.com/KerenBermeo/CorreoQuery/router"
 	"github.com/go-chi/chi/v5"
 )
 
 func main() {
-
+	getenv.ReadEnv()
+	// Iniciar el servidor de perfilamiento de Go (pprof) en segundo plano
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	// startTime registra el tiempo de inicio de la ejecución del programa.
+	// Iniciar un temporizador para registrar el tiempo de inicio de la ejecución del programa
 	startTime := time.Now()
 
-	// wg es un WaitGroup para esperar a que todas las goroutines finalicen.
+	// Verificar si el índice existe
+	passed, err := c.CheckIndexExists()
+	if err != nil {
+		log.Printf("error al verificar la existencia del índice: %v", err)
+	}
+
+	// Crear un WaitGroup para esperar a que todas las goroutines finalicen
 	var wg sync.WaitGroup
 
-	// rootDirectory es la ruta del directorio raíz que contiene los correos electrónicos.
-	// rootDirectory := "/Users/user/Desktop/EmailQuery/data"
-	rootDirectory := "/Users/user/Desktop/archivos"
-	//rootDirectory := "/Users/user/Desktop/EmailQuery/data/arnold-j"
-
-	// batchSize es el tamaño del lote de correos electrónicos a procesar en cada iteración.
-	batchSize := 500
-
-	// mailsPaths contiene los paths de los archivos de correos electrónicos.
-	mailsPaths, err := data.CollectMailsPaths(rootDirectory)
-	if err != nil {
-		log.Printf("error al recopilar paths: %s", err)
+	rootDirectory := getenv.GetRootDirectory()
+	if rootDirectory == "" {
+		log.Println("Variable de entorno vacia")
 	}
 
-	// chunks contiene lotes de paths de correos electrónicos para procesamiento concurrente.
-	chunks := data.ChunkEmails(mailsPaths)
+	//tamaño del lote
+	maxBatch := 1000
 
-	// Agrega el número de chunks al WaitGroup.
-	wg.Add(len(chunks))
+	if passed {
 
-	// Procesa cada chunk de correos electrónicos concurrentemente.
-	for _, chunk := range chunks {
-		go data.ProcessBatch(chunk, batchSize, &wg)
+		// Obtener los paths de los archivos de correos electrónicos
+		mailsPaths, err := data.CollectMailsPaths(rootDirectory)
+		if err != nil {
+			log.Printf("error al recopilar paths: %s", err)
+		}
+
+		//Dividir el slice de paths en chunks para su procesamiento
+		chunks := data.ChunkEmails(mailsPaths)
+		c.NumberFiles = len(mailsPaths)
+		log.Println("Archivos: ", c.NumberFiles)
+
+		data.Count = 0
+		wg.Add(len(chunks))
+		for _, chunk := range chunks {
+
+			go data.ParseEmailFromPath(chunk, maxBatch, &wg)
+		}
+		wg.Wait()
 	}
 
-	// Espera a que todas las goroutines finalicen.
-	wg.Wait()
-
-	// Registra el tiempo después de que todas las goroutines han terminado.
+	// Registrar el tiempo después de que todas las goroutines han terminado
 	endTime := time.Now()
 
-	// Calcula y muestra la duración total de la ejecución.
+	// Calcular y mostrar la duración total de la ejecución
 	duration := endTime.Sub(startTime)
-	fmt.Printf("Tiempo total de ejecución: %s\n", duration)
 
+	log.Printf("tiempo total de ejecución: %s\n", duration)
+
+	//Iniciar el servidor HTTP
 	r := chi.NewRouter()
 	router.ConfigureRouter(r)
-
-	log.Fatal(http.ListenAndServe(":8080", r))
+	port := getenv.GetPortListening()
+	log.Println("Servidor escuchando en el puerto", port)
+	log.Fatal(http.ListenAndServe(port, r))
 }
