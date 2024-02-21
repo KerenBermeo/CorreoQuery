@@ -75,7 +75,7 @@ func main() {
 	//Iniciar el servidor HTTP
 	r := chi.NewRouter()
 	router.ConfigureRouter(r)
-	port := ":8080"
+	port := getenv.GetPortListening()
 	log.Println("Servidor escuchando en el puerto", port)
 	log.Fatal(http.ListenAndServe(port, r))
 }

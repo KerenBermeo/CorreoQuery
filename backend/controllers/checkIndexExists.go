@@ -9,12 +9,12 @@ import (
 )
 
 func CheckIndexExists() (bool, error) {
-	serverUrl := getenv.GetZincSearchServerURL()
+
 	nameIndex := getenv.GetNameIndex()
 	if nameIndex == "" {
 		log.Println("Variable de entorno vacia")
 	}
-
+	serverUrl := getenv.GetZincSearchServerURL()
 	if serverUrl == "" {
 		log.Println("Variable de entorno vacia")
 	}

@@ -6,6 +6,8 @@
   const route = useRoute()
   const params = route.params.query
   const result = ref<SearchResult[]>([]);
+
+
   
   // Función para realizar la solicitud de búsqueda
   const search = async () => {
@@ -43,7 +45,7 @@
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8 bg-gray-900 text-white min-h-screen">
+  <div class="container px-20 py-8 bg-gray-900 text-white min-h-screen max-w-full">
     <!-- Botón de retroceso -->
     <router-link to="/" class="text-gray-400 hover:text-gray-300 mb-4 inline-block">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
