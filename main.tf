@@ -117,23 +117,13 @@ resource "aws_instance" "email_query_ec2" {
   iam_instance_profile   = aws_iam_instance_profile.ec2_deployer_user.name
   key_name               = aws_key_pair.my_key_pair.key_name 
 
-  user_data =  <<EOF
+  user_data = <<EOF
     #!/bin/bash
-    set -ex
-    sudo apt update && sudo apt upgrade -y
-    sudo apt install apt-transport-https ca-certificates curl software-properties-common
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    sudo apt update
-    sudo apt install docker-ce
-    sudo usermod -aG docker $USER            
-    sudo systemctl start docker
-    # Esperar 10 segundos para asegurar que Docker se inicie completamente
-    sleep 10           
-    sudo apt install git -y
-    sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
-    sudo chmod +x /usr/local/bin/docker-compose 
-    docker run -d -p 4080:4080 --name zincsearch public.ecr.aws/zinclabs/zincsearch:latest
+    sudo apt-get update
+    sudo apt-get install -y docker-compose
+    git clone https://github.com/tu_usuario/tu_repositorio.git
+    cd tu_repositorio
+    docker-compose up -d
   EOF
 
   tags = {
