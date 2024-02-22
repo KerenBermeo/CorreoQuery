@@ -123,6 +123,24 @@ resource "aws_instance" "email_query_ec2" {
     sudo apt-get install -y docker-compose
     git clone https://github.com/tu_usuario/tu_repositorio.git
     cd tu_repositorio
+
+    # Variables de entorno para el backend
+      export ZINC_FIRST_ADMIN_USER=${var.zinc_first_admin_user}
+      export ZINC_FIRST_ADMIN_PASSWORD=${var.zinc_first_admin_password}
+      export ZINC_SERVER_NAME_INDEX=${var.zinc_server_name_index}
+      export ZINC_SEARCH_URL=${var.zinc_search_url}
+      export BACK_ROOT_DIRECTORY="${var.data_s3_url}"
+      export BACK_LISTEN_SERVER=${var.back_listen_server}
+      export VITE_API_URL=${var.vite_api_url}
+              
+      # Mover las variables de entorno del backend a la ubicación deseada
+      echo "export ZINC_FIRST_ADMIN_USER=${var.zinc_first_admin_user}" >> /path/to/backend/vars.env
+      echo "export ZINC_FIRST_ADMIN_PASSWORD=${var.zinc_first_admin_password}" >> /path/to/backend/vars.env
+      echo "export ZINC_SERVER_NAME_INDEX=${var.zinc_server_name_index}" >> /path/to/backend/vars.env
+      echo "export ZINC_SEARCH_URL=${var.zinc_search_url}" >> /path/to/backend/.env
+      echo "export BACK_ROOT_DIRECTORY=${var.back_root_directory}" >> /path/to/backend/vars.env
+      echo "export BACK_LISTEN_SERVER=${var.back_listen_server}" >> /path/to/backend/vars.env
+      echo "export VITE_API_URL=${var.vite_api_url}" >> /path/to/api-front/.env
     docker-compose up -d
   EOF
 
