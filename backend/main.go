@@ -1,24 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"runtime"
 	"sync"
 	"time"
 
 	"net/http"
 	_ "net/http/pprof"
 
-	"github.com/KerenBermeo/CorreoQuery/controllers"
+	c "github.com/KerenBermeo/CorreoQuery/controllers"
 	data "github.com/KerenBermeo/CorreoQuery/extractToSendData"
 	getenv "github.com/KerenBermeo/CorreoQuery/getEnv"
-	"github.com/KerenBermeo/CorreoQuery/model"
-	// 	"github.com/KerenBermeo/CorreoQuery/router"
-	// 	"github.com/go-chi/chi/v5"
+	"github.com/KerenBermeo/CorreoQuery/router"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
+	getenv.ReadEnv()
 	// Iniciar el servidor de perfilamiento de Go (pprof) en segundo plano
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
@@ -27,11 +25,8 @@ func main() {
 	// Iniciar un temporizador para registrar el tiempo de inicio de la ejecución del programa
 	startTime := time.Now()
 
-	// Obtener el índice de nombres desde algún lugar (aquí se asume que se obtiene del entorno)
-	nameIndex := getenv.GetNameIndex()
-
-	// Verificar si el índice existe en los controladores
-	passed, err := controllers.CheckIndexExists(nameIndex)
+	// Verificar si el índice existe
+	passed, err := c.CheckIndexExists()
 	if err != nil {
 		log.Printf("error al verificar la existencia del índice: %v", err)
 	}
@@ -39,67 +34,34 @@ func main() {
 	// Crear un WaitGroup para esperar a que todas las goroutines finalicen
 	var wg sync.WaitGroup
 
-	// Definir la ruta del directorio raíz que contiene los correos electrónicos
-	//rootDirectory := "/Users/user/Desktop/EmailQuery/data/allen-p"
-	rootDirectory := "/Users/user/Desktop/archivos_2"
-	// rootDirectory := "/Users/user/Desktop/EmailQuery/data"
+	rootDirectory := getenv.GetRootDirectory()
+	if rootDirectory == "" {
+		log.Println("Variable de entorno vacia")
+	}
 
-	// Si el índice existe, proceder con el procesamiento de correos electrónicos
+	//tamaño del lote
+	maxBatch := 1000
+
 	if passed {
+
 		// Obtener los paths de los archivos de correos electrónicos
 		mailsPaths, err := data.CollectMailsPaths(rootDirectory)
 		if err != nil {
 			log.Printf("error al recopilar paths: %s", err)
 		}
 
-		// Se determina el número de núcleos lógicos disponibles en el sistema.
-		numCPU := runtime.NumCPU()
+		//Dividir el slice de paths en chunks para su procesamiento
+		chunks := data.ChunkEmails(mailsPaths)
+		c.NumberFiles = len(mailsPaths)
+		log.Println("Archivos: ", c.NumberFiles)
 
-		// Se obtiene la cantidad total de rutas de correos electrónicos en la lista.
-		numMails := len(mailsPaths)
-		fmt.Println("numMails ------> ", numMails)
-		//fmt.Println(numMails)
-		fmt.Println("numCPU ------> ", numCPU)
-		// Se calcula el tamaño de cada fragmento, considerando el número de núcleos lógicos.
-		chunkSize := (numMails + numCPU - 1) / numCPU
-		fmt.Println("chunkSize ------> ", chunkSize)
-		//fmt.Println(chunkSize)
+		data.Count = 0
+		wg.Add(len(chunks))
+		for _, chunk := range chunks {
 
-		var models []model.Email
-		contador := 0
-		for i := 0; i < len(mailsPaths); i += chunkSize {
-			end := i + chunkSize
-			contador++
-
-			if end > len(mailsPaths) {
-				end = len(mailsPaths)
-			}
-			wg.Add(1)
-			go func(start, end int) {
-				models, err = data.ParseEmailFromPath(contador, mailsPaths[start:end])
-
-				if err != nil {
-					log.Printf("error al parsear correos electrónicos: %v", err)
-					return
-				}
-
-				fmt.Println("Inicio de transformacion a json ->")
-				if (i+1)%chunkSize == 0 { // Upload bulk and start over
-					log.Printf("Uploading bulk %v / %v", i+1, len(mailsPaths))
-					data.ConcurrentParsedEmailJson(models)
-					models = nil
-				} else if models != nil && (i+1) == len(mailsPaths) { // Upload last bulk
-					log.Printf("Uploading bulk %v / %v", i+1, len(mailsPaths))
-					data.ConcurrentParsedEmailJson(models)
-				}
-
-			}(i, end)
+			go data.ParseEmailFromPath(chunk, maxBatch, &wg)
 		}
-
 		wg.Wait()
-
-		// Se encarga de transformar las estructuras a json
-
 	}
 
 	// Registrar el tiempo después de que todas las goroutines han terminado
@@ -108,10 +70,12 @@ func main() {
 	// Calcular y mostrar la duración total de la ejecución
 	duration := endTime.Sub(startTime)
 
-	fmt.Printf("tiempo total de ejecución: %s\n", duration)
+	log.Printf("tiempo total de ejecución: %s\n", duration)
 
-	// Iniciar el servidor HTTP con el enrutador configurado (si es necesario)
-	// r := chi.NewRouter()
-	// router.ConfigureRouter(r)
-	// log.Fatal(http.ListenAndServe(":8080", r))
+	//Iniciar el servidor HTTP
+	r := chi.NewRouter()
+	router.ConfigureRouter(r)
+	port := getenv.GetPortListening()
+	log.Println("Servidor escuchando en el puerto", port)
+	log.Fatal(http.ListenAndServe(port, r))
 }

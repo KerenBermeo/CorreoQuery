@@ -3,13 +3,12 @@ package data
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
 )
 
-// CollectMailsPaths recopila los paths de archivos sin extensión en el directorio dado.
-// Utiliza concurrencia para procesar los archivos de manera eficiente.
 // Devuelve una lista de paths de archivos encontrados.
 func CollectMailsPaths(rootPath string) ([]string, error) {
 	var mailsPathsMu sync.Mutex
@@ -17,9 +16,8 @@ func CollectMailsPaths(rootPath string) ([]string, error) {
 
 	var wg sync.WaitGroup
 	semaphore := make(chan struct{}, 32)
-	filesCh := make(chan string) // Definir el canal filesCh
-
-	fmt.Println("Inicio recoleccion de paths -->")
+	filesCh := make(chan string)
+	log.Println("Inicio recoleccion de paths -->")
 
 	// Función que representa a los trabajadores
 	worker := func() {
@@ -50,16 +48,12 @@ func CollectMailsPaths(rootPath string) ([]string, error) {
 		return nil
 	}
 
-	// Realizar el recorrido del directorio con el walkFunc
 	err := filepath.Walk(rootPath, walkFunc)
-
-	// Cerrar el canal filesCh después de caminar el directorio
-	close(filesCh)
-
 	if err != nil && err != io.EOF {
 		return nil, fmt.Errorf("error al recopilar paths: %s", err)
 	}
 
+	close(filesCh)
 	wg.Wait()
 
 	// Convertir el mapa a un slice de strings
@@ -70,7 +64,7 @@ func CollectMailsPaths(rootPath string) ([]string, error) {
 	}
 	mailsPathsMu.Unlock()
 
-	fmt.Println("Todos los paths han sido recopilados --> --> ")
+	log.Println("Todos los paths han sido recopilados --> --> ")
 
 	return result, nil
 }
