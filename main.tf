@@ -24,7 +24,7 @@ data "http" "my_ip" {
 }
 
 resource "aws_security_group" "ec2_sg" {
-  name        = "gs_aws"
+  name        = "nombre_gs"
   description = "Allow hhtp access on port 6002 for backend"
   vpc_id      = aws_default_vpc.default.id
 
@@ -81,7 +81,7 @@ resource "aws_security_group" "ec2_sg" {
 }
 
 resource "aws_iam_instance_profile" "ec2_deployer_user" {
-  name = "ker_ter_user"
+  name = "my_nombre_perfil"
 }
 
 data "aws_ami" "ubuntu_ami" {
@@ -105,7 +105,7 @@ data "aws_ami" "ubuntu_ami" {
 }
 
 resource "aws_key_pair" "my_key_pair" {
-  key_name   = "mykey"
+  key_name   = "key_name"
   public_key = "${file("../../../.ssh/id_rsa.pub")}"
 }
 
@@ -130,53 +130,16 @@ resource "aws_instance" "email_query_ec2" {
     sudo chmod +x /usr/local/bin/docker-compose
     docker-compose version
 
-    #instalar docker
+    # docker
     sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
     sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    sudo apt update
     sudo apt install -y docker-ce
-    sudo docker --version
     sudo usermod -aG docker $USER
 
-    #instalar node
-    sudo apt update
+    # node
     curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
     sudo apt install -y nodejs
-    node --version
-    npm --version
-
-    git clone https://github.com/tu_usuario/tu_repositorio.git
-    cd CorreoQuery
-
-    # Descargar el archivo .tar desde S3
-    sudo apt install awscli
-    aws configure
-    aws s3 cp s3://enron.data.comprimido/enron_mail_20150507.tar /tmp/enron_mail_20150507.tar
-
-    # Descomprimir el archivo .tar
-    mkdir -p /home/ubuntu/data
-    tar -xvf /tmp/enron_mail_20150507.tar -C /home/ubuntu/data
-
-    # Variables de entorno para el backend
-      export ZINC_FIRST_ADMIN_USER=${var.zinc_first_admin_user}
-      export ZINC_FIRST_ADMIN_PASSWORD=${var.zinc_first_admin_password}
-      export ZINC_SERVER_NAME_INDEX=${var.zinc_server_name_index}
-      export ZINC_SEARCH_URL=${var.zinc_search_url}
-      export BACK_ROOT_DIRECTORY="/home/ubuntu/data"
-      export BACK_LISTEN_SERVER=${var.back_listen_server}
-      export VITE_API_URL=${var.vite_api_url}
-              
-      # Mover las variables de entorno del backend a la ubicación deseada
-      echo "export ZINC_FIRST_ADMIN_USER=${var.zinc_first_admin_user}" >> /path/to/backend/vars.env
-      echo "export ZINC_FIRST_ADMIN_PASSWORD=${var.zinc_first_admin_password}" >> /path/to/backend/vars.env
-      echo "export ZINC_SERVER_NAME_INDEX=${var.zinc_server_name_index}" >> /path/to/backend/vars.env
-      echo "export ZINC_SEARCH_URL=${var.zinc_search_url}" >> /path/to/backend/.env
-      echo 'export BACK_ROOT_DIRECTORY="/home/ubuntu/data"' >> /path/to/backend/vars.env
-      echo "export BACK_LISTEN_SERVER=${var.back_listen_server}" >> /path/to/backend/vars.env
-      echo "export VITE_API_URL=${var.vite_api_url}" >> /path/to/api-front/.env
-    
-    docker-compose up -d
   EOF
 
   tags = {
