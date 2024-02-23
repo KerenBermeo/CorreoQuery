@@ -1,26 +1,36 @@
 version: '3.8'
 
+networks:
+  my-network:
+    driver: bridge
+
 services:
   zinc-server:
     build: ./zinc-server
     ports:
       - "6001:4080"
+    networks:
+      - my-network
 
   api-back:
     build: ./backend
     ports:
-      - "6002:8080"
+      - "6002:8081"
     environment:
       ZINC_SERVER_HOST: http://zinc-server:4080/
     depends_on:
       - zinc-server
+    networks:
+      - my-network
 
   api-front:
     build:
       context: ./api-front
       args:
-        elookupbe_host: ${ELOOKUPBE_REMOTE_HOST:-http://localhost:6002/}
+        backend_host: ${BACKEND_REMOTE_HOST:-http://api-back:8081/}
     ports:
-      - "6003:5173"
+      - "6003:8080"
     depends_on:
       - api-back
+    networks:
+      - my-network

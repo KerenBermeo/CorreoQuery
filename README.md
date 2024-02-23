@@ -8,6 +8,11 @@ EmailQuery is an interface designed for efficiently searching information in an 
 
 Upload the Enron data available at [http://www.cs.cmu.edu/~enron](http://www.cs.cmu.edu/~enron) to S3 in AWS. These are the data that will be subsequently indexed in the ZincSearch search engine [https://zincsearch-docs.zinc.dev/](https://zincsearch-docs.zinc.dev/).
 
+**Note:** You must download the special binary for your machine, the binaries that you see in the .zinc file are the version
+- zincsearch_0.4.10_windows_arm64.tar.gz
+- zincsearch_0.4.10_linux_x86_64.tar.gz
+See which one is right for you at: https://github.com/zincsearch/zincsearch/releases
+
 ### Running Locally
 
 If you wish to run it locally:

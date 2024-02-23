@@ -10,4 +10,4 @@ ENV ZINC_FIRST_ADMIN_PASSWORD=$pass
 
 EXPOSE 4080
 
-CMD ["./zincsearch"]
+CMD ["./zinc"]

@@ -19,5 +19,7 @@ COPY . .
 # Compila la aplicación
 RUN go build -o ./backend/main
 
+EXPOSE 8081
+
 # Ejecutar la aplicación
 CMD ["./backend/main"]
