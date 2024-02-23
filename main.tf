@@ -24,7 +24,7 @@ data "http" "my_ip" {
 }
 
 resource "aws_security_group" "ec2_sg" {
-  name        = "grupo_seguridad"
+  name        = "grupo_seguridad_nombre"
   description = "Allow hhtp access on port 6002 for backend"
   vpc_id      = aws_default_vpc.default.id
 
@@ -81,7 +81,7 @@ resource "aws_security_group" "ec2_sg" {
 }
 
 resource "aws_iam_instance_profile" "ec2_deployer_user" {
-  name = "perfil_keren"
+  name = "nombre_perfil"
 }
 
 data "aws_ami" "ubuntu_ami" {
@@ -105,7 +105,7 @@ data "aws_ami" "ubuntu_ami" {
 }
 
 resource "aws_key_pair" "my_key_pair" {
-  key_name   = "key_keren_1"
+  key_name   = "key_keren_2"
   public_key = "${file("../../../.ssh/id_rsa.pub")}"
 }
 

@@ -3,6 +3,8 @@ FROM busybox
 WORKDIR "/zinc-bin"
 COPY ./zinc .
 
+RUN chmod +x ./zinc
+
 ARG user=admin
 ARG pass=Complexpass#123
 ENV ZINC_FIRST_ADMIN_USER=$user
