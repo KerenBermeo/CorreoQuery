@@ -24,7 +24,7 @@ data "http" "my_ip" {
 }
 
 resource "aws_security_group" "ec2_sg" {
-  name        = "nombre_gs"
+  name        = "grupo_seguridad"
   description = "Allow hhtp access on port 6002 for backend"
   vpc_id      = aws_default_vpc.default.id
 
@@ -81,7 +81,7 @@ resource "aws_security_group" "ec2_sg" {
 }
 
 resource "aws_iam_instance_profile" "ec2_deployer_user" {
-  name = "my_nombre_perfil"
+  name = "perfil_keren"
 }
 
 data "aws_ami" "ubuntu_ami" {
@@ -105,7 +105,7 @@ data "aws_ami" "ubuntu_ami" {
 }
 
 resource "aws_key_pair" "my_key_pair" {
-  key_name   = "key_name"
+  key_name   = "key_keren_1"
   public_key = "${file("../../../.ssh/id_rsa.pub")}"
 }
 
@@ -121,26 +121,7 @@ resource "aws_instance" "email_query_ec2" {
     volume_size = 10
   }
 
-  user_data = <<EOF
-    #!/bin/bash
-    sudo apt-get update
-   
-    # docker-compose
-    sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
-    sudo chmod +x /usr/local/bin/docker-compose
-    docker-compose version
-
-    # docker
-    sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    sudo apt install -y docker-ce
-    sudo usermod -aG docker $USER
-
-    # node
-    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-    sudo apt install -y nodejs
-  EOF
+  user_data = file("${path.module}/script.sh")
 
   tags = {
     project = "email-query" 
