@@ -38,10 +38,11 @@ func CollectMailsPaths(rootPath string) ([]string, error) {
 
 	// Función para caminar por los archivos y enviarlos al canal filesCh
 	walkFunc := func(path string, fileInfo os.FileInfo, err error) error {
+
 		if err != nil {
 			return err
 		}
-		if !fileInfo.IsDir() && filepath.Ext(fileInfo.Name()) == "" {
+		if !fileInfo.IsDir() {
 			semaphore <- struct{}{}
 			filesCh <- path
 		}

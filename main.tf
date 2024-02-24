@@ -81,7 +81,7 @@ resource "aws_security_group" "ec2_sg" {
 }
 
 resource "aws_iam_instance_profile" "ec2_deployer_user" {
-  name = "deploy_emailquery_2"
+  name = "deploy_emailquery_3"
 }
 
 data "aws_ami" "ubuntu_ami" {

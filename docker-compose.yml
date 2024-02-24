@@ -18,9 +18,9 @@ services:
       - "6002:8081"
     environment:
       ZINC_SERVER_HOST: http://zinc-server:4080/
-      BACK_ROOT_DIRECTORY: /data
+    command: sh -c "mkdir -p /app/email && go run ."
     volumes:
-      - C:\Users\user\Desktop\archivos_2:/data
+      - direccion/del/host/donde/estan/los/archivos:/app/email
     depends_on:
       - zinc-server
     networks:

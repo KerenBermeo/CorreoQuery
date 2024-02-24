@@ -33,7 +33,3 @@ func GetNameIndex() string {
 func GetRootDirectory() string {
 	return os.Getenv("BACK_ROOT_DIRECTORY")
 }
-
-func GetPortListening() string {
-	return os.Getenv("BACK_LISTEN_SERVER")
-}
