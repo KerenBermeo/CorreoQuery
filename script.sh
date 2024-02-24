@@ -13,10 +13,7 @@ add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(
 apt install -y docker-ce
 usermod -aG docker $USER
 
-    # node
+# node
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 apt install -y nodejs
 
-apt install awscli
-
-git clone https://github.com/KerenBermeo/CorreoQuery.git

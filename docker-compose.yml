@@ -18,6 +18,9 @@ services:
       - "6002:8081"
     environment:
       ZINC_SERVER_HOST: http://zinc-server:4080/
+      BACK_ROOT_DIRECTORY: /data
+    volumes:
+      - C:\Users\user\Desktop\archivos_2:/data
     depends_on:
       - zinc-server
     networks:
