@@ -25,18 +25,20 @@ const fetchEmails = async () => {
     }
     const data = await response.json();
    
-    // console.log(data.hits.hits);
+    console.log(data.hits.hits);
 
     emails.value = data.hits.hits.map((email: any) => ({
       id: email._id,
-      from: email._source.from,
-      date: email._source.date,
-      to: email._source.to,
-      subject: email._source.subject,
-      content: email._source.content
+      from: email._source.From,
+      date: email._source.Date,
+      to: email._source.To,
+      subject: email._source.Subject,
+      content: email._source.Content
     }));
 
-   
+    
+
+    console.log(emails.value);
 
     // Mostrar el primer correo en el contenido principal por defecto
     if (emails.value.length > 0) {

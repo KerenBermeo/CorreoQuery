@@ -2,7 +2,7 @@ package data
 
 import "strings"
 
-func ShouldExclude(line string) bool {
+func shouldExclude(line string) bool {
 	excludedHeaders := []string{
 		"Mime-Version: ",
 		"Content-Type: ",
@@ -17,8 +17,8 @@ func ShouldExclude(line string) bool {
 	}
 	for _, excluded := range excludedHeaders {
 		if strings.HasPrefix(line, excluded) {
-			return true
+			return false
 		}
 	}
-	return false
+	return true
 }

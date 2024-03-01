@@ -2,11 +2,11 @@ package data
 
 import "runtime"
 
-// ChunkEmails divide una lista de rutas de correos electrónicos en fragmentos más pequeños.
-func ChunkEmails(mailsPaths []string) [][]string {
+func SplitIntoChunks(paths []string) [][]string {
+
 	var chunks [][]string
 	numCPU := runtime.NumCPU()
-	numMails := len(mailsPaths)
+	numMails := len(paths)
 
 	chunkSize := (numMails + numCPU - 1) / numCPU
 
@@ -16,7 +16,8 @@ func ChunkEmails(mailsPaths []string) [][]string {
 			end = numMails
 		}
 
-		chunks = append(chunks, mailsPaths[i:end])
+		chunks = append(chunks, paths[i:end])
 	}
 	return chunks
+
 }
