@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -36,7 +37,7 @@ func main() {
 	if passed {
 
 		paths := data.GetAllFilePaths(rootDirectory)
-
+		fmt.Println(len(paths))
 		chunks := data.SplitIntoChunks(paths)
 
 		var processFile model.FileProcessorFunc = data.ProcessFile

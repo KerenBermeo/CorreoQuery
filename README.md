@@ -25,7 +25,7 @@ If you wish to run it locally:
      ZINC_SEARCH_URL=""
      ZINC_SERVER_NAME_INDEX=desired name for your index
      BACK_ROOT_DIRECTORY=here you should put the data direction
-     BACK_LISTEN_SERVER=""
+     REQUEST_ORIGIN=""
      ```
 
    - Front - .env:
