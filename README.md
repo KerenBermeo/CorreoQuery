@@ -1,66 +1,137 @@
-# Email Query
+# **EmailQuery**
 
-EmailQuery is an interface designed for efficiently searching information in an email database. This tool provides an intuitive user experience to explore and retrieve relevant data stored in the database, facilitating management and search.
+**EmailQuery** es una interfaz diseñada para buscar eficientemente información en una base de datos de correos electrónicos. Este proyecto permite explorar y recuperar datos relevantes almacenados en la base de datos, facilitando su gestión y búsqueda.
 
-## How to Run the App
+---
 
-### Uploading Enron Data to AWS S3
+## **Descripción**
 
-Upload the Enron data available at [http://www.cs.cmu.edu/~enron](http://www.cs.cmu.edu/~enron) to S3 in AWS. These are the data that will be subsequently indexed in the ZincSearch search engine [https://zincsearch-docs.zinc.dev/](https://zincsearch-docs.zinc.dev/).
+Este proyecto utiliza el conjunto de datos **Enron Email Dataset**, que contiene más de 500,000 correos electrónicos de la empresa Enron, y permite realizar búsquedas sobre estos correos a través de una interfaz sencilla. El backend fue desarrollado en **Go** y el frontend en **Vue 3** con **TypeScript**. El motor de búsqueda utilizado es **ZincSearch**, una alternativa de código abierto a **Elasticsearch**.
 
-**Note:** You must download the special binary for your machine, the binaries that you see in the .zinc file are the version
-- zincsearch_0.4.10_linux_x86_64.tar.gz
-See which one is right for you at: https://github.com/zincsearch/zincsearch/releases
+**Características principales:**
+- **Búsqueda eficiente:** Consultas rápidas sobre los correos.
+- **Despliegue en la nube:** Implementación usando **AWS**.
+- **Diseño frontend básico:** Interfaz de usuario con **Vue 3** y **Tailwind CSS**.
 
-### Running Locally
+---
 
-If you wish to run it locally:
+## **Cómo ejecutar la aplicación**
 
-1. Clone the repository and set up your environment variables in .env files:
+### **1. Subir los datos de Enron a AWS S3:**
 
-   - Back - vars.env:
-     ```
-     ZINC_FIRST_ADMIN_USER=admin
-     ZINC_FIRST_ADMIN_PASSWORD=Complexpass#123
-     ZINC_SEARCH_URL=""
-     ZINC_SERVER_NAME_INDEX=desired name for your index
-     BACK_ROOT_DIRECTORY=here you should put the data direction
-     REQUEST_ORIGIN=""
-     ```
+Primero, debes descargar los datos de Enron disponibles en [CMU Enron Dataset](http://www.cs.cmu.edu/~enron) y cargarlos a tu bucket de AWS S3.  
+Asegúrate de tener configurado tu entorno de AWS CLI correctamente. Puedes encontrar más información en la [documentación oficial de AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html).
 
-   - Front - .env:
-     ```
-     VITE_API_URL=""
-     ```
+### **2. Ejecutar localmente:**
 
-2. Afterward, execute the `docker-compose up` command.
+Si deseas ejecutar la aplicación localmente, sigue estos pasos:
 
-### Deploying
+#### **a. Clona el repositorio:**
 
-If you want to deploy, the `main.ts` file is configured to work with AWS:
+```bash
+git clone https://github.com/KerenBermeo/CorreoQuery.git
+cd CorreoQuery
+```
 
-1. First, it's desirable to install Terraform.
-   
-2. Configure the key associated with your account and the names you want
-   
-3. Then execute the following commands:
+#### **b. Configura tus variables de entorno:**
 
+Crea un archivo `.env` en el directorio raíz y configura las variables necesarias para el backend y frontend:
+
+- **Backend (vars.env):**
+  ```env
+  ZINC_FIRST_ADMIN_USER=admin
+  ZINC_FIRST_ADMIN_PASSWORD=Complexpass#123
+  ZINC_SEARCH_URL=""
+  ZINC_SERVER_NAME_INDEX=desired_name_for_index
+  BACK_ROOT_DIRECTORY=path_to_your_data
+  REQUEST_ORIGIN=""
+  ```
+
+- **Frontend (.env):**
+  ```env
+  VITE_API_URL=""
+  ```
+
+#### **c. Ejecuta el contenedor con Docker:**
+
+```bash
+docker-compose up -d
+```
+
+---
+
+## **Despliegue en AWS**
+
+Para desplegar la aplicación en **AWS EC2**, sigue estos pasos:
+
+### **1. Instalar Terraform:**
+
+Primero, instala **Terraform** en tu máquina. Puedes seguir los pasos de instalación en su [página oficial](https://www.terraform.io/downloads.html).
+
+### **2. Configurar la infraestructura en AWS:**
+
+Dentro del proyecto, el archivo `main.ts` está configurado para trabajar con AWS. Ejecuta los siguientes comandos para iniciar, planificar y aplicar la infraestructura:
+
+```bash
 terraform init
 terraform plan
 terraform apply
+```
 
+### **3. Subir los datos a S3 y ejecutar la aplicación:**
 
-**Note:** Ensure that you have the necessary permissions and configurations set up for AWS and Terraform before running the deployment commands.
+Una vez que la instancia de AWS esté corriendo, conéctate a ella y ejecuta los siguientes pasos:
 
-4. Once the instance is running, connect to it and execute the following commands:
+```bash
+git clone https://github.com/KerenBermeo/CorreoQuery.git
+cd CorreoQuery
+sudo apt install awscli
+aws configure
+aws s3 cp s3://bucket_name/compressed_file_name /tmp/compressed_file_name
+# Extrae los archivos en una carpeta
+unzip /tmp/compressed_file_name -d /desired_directory
+# Elimina el archivo comprimido
+rm /tmp/compressed_file_name
+```
 
-- git clone https://github.com/KerenBermeo/CorreoQuery.git
-- sudo apt install awscli
-- aws configure
-- aws s3 cp s3://bucket_name/compressed_file_name /tmp/compressed_file_name
-- Create a folder and unzip the file into that folder.
-- Delete the compressed file.
-- cd CorreoQuery, enter the cloned repository, and configure the environment variables at the root - of both the backend and frontend.
-- Finally, execute the command: docker-compose up -d.
+#### **4. Configura las variables de entorno en AWS:**
 
-**Note:** To view the program online, remember to use HTTP.
+Asegúrate de configurar las variables de entorno en el servidor para que el backend y el frontend funcionen correctamente.
+
+#### **5. Ejecuta el contenedor en AWS:**
+
+```bash
+docker-compose up -d
+```
+
+---
+
+## **Tecnologías utilizadas**
+
+- **Backend:** Go (ETL, API REST)
+- **Frontend:** Vue 3, TypeScript, Tailwind CSS
+- **Motor de búsqueda:** ZincSearch (alternativa a Elasticsearch)
+- **Despliegue:** Docker, AWS EC2, Terraform
+- **Infraestructura como código:** Terraform
+
+---
+
+## **Próximos pasos**
+
+Este proyecto está en constante desarrollo. Las siguientes mejoras están planificadas:
+
+- Optimización del proceso ETL y de concurrencia.
+- Mejoras en la experiencia de usuario (UX).
+- Refactorización del código siguiendo las buenas prácticas y principios SOLID.
+
+---
+
+## **Licencia**
+
+Este proyecto está bajo la licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
+
+---
+
+### 🔍 **¿Te gustaría probar la aplicación?**
+
+¡Puedes hacerlo! Si estás interesado en ver cómo funciona el proyecto o quieres colaborar, no dudes en seguir los pasos de instalación y despliegue. 
